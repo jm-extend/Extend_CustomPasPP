@@ -1,0 +1,114 @@
+<?php
+
+/**
+ * @var $block \Magento\Catalog\Block\Product\View
+ * @var Extend\Warranty\ViewModel\Installation $viewModel
+ */
+$viewModel = $block->getData('viewModel');
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$tz = $objectManager->get(\Magento\Framework\Stdlib\DateTime\TimezoneInterface::class);
+$td = $tz->date(new \DateTime())->format('Y-m-d H:i:s a');
+$current_month = $tz->date(new \DateTime())->format('M');
+$today_day = $tz->date(new \DateTime())->format('D');
+$start_time = $tz->date(new \DateTime())->format('D, M j');
+$time_hours = $tz->date(new \DateTime())->format('H');
+if ($time_hours < 13) {
+    if ($today_day == 'Sun' || $today_day == 'Mon') {
+        $plus4days = date('D, M j', strtotime($start_time . ' + 4 days'));
+    } elseif ($today_day == 'Sat') {
+        $plus4days = date('D, M j', strtotime($start_time . ' + 5 days'));
+    } else {
+        $plus4days = date('D, M j', strtotime($start_time . ' + 6 days'));
+    }
+    if ($today_day == 'Thu' || $today_day == 'Fri') {
+        $plus7days = date('D, M j', strtotime($start_time . ' + 11 days'));
+    } elseif ($today_day == 'Sat') {
+        $plus7days = date('D, M j', strtotime($start_time . ' + 10 days'));
+    } else {
+        $plus7days = date('D, M j', strtotime($start_time . ' + 9 days'));
+    }
+} else {
+    if ($today_day == 'Mon' || $today_day == 'Tue' || $today_day == 'Wed' || $today_day == 'Thu' || $today_day == 'Fri') {
+        $plus4days = date('D, M j', strtotime($start_time . ' + 7 days'));
+    } elseif ($today_day == 'Sat') {
+        $plus4days = date('D, M j', strtotime($start_time . ' + 6 days'));
+    } else {
+        $plus4days = date('D, M j', strtotime($start_time . ' + 5 days'));
+    }
+    if ($today_day == 'Mon' || $today_day == 'Tue' || $today_day == 'Sun') {
+        $plus7days = date(' D, M j', strtotime($start_time . ' + 10 days'));
+    } elseif ($today_day == 'Sat') {
+        $plus7days = date('D, M j', strtotime($start_time . ' + 11 days'));
+    } else {
+        $plus7days = date('D, M j', strtotime($start_time . ' + 12 days'));
+    }
+}
+?>
+<?php $_product = $block->getProduct(); ?>
+<?php $buttonTitle = __('Add to Cart'); ?>
+<?php if ($_product->isSaleable()): ?>
+    <div class="box-tocart">
+	<div class="pre-message"></div>
+        <div class="fieldset">
+            <?php if ($block->shouldRenderQuantity()): ?>
+                <div class="field qty">
+                    <label class="label" for="qty"><span><?= /* @escapeNotVerified */
+                            __('Qty') ?></span></label>
+                    <div class="control">
+                        <input type="number"
+                               name="qty"
+                               id="qty"
+                               value="<?= /* @escapeNotVerified */
+                               $block->getProductDefaultQty() * 1 ?>"
+                               title="<?= /* @escapeNotVerified */
+                               __('Qty') ?>"
+                               class="input-text qty"
+                               data-validate="<?= $block->escapeHtml(json_encode($block->getQuantityValidators())) ?>"
+                        />
+                        <div class="qty-changer">
+                            <a href="javascript:void(0)" class="qty-inc"><i class="porto-icon-up-dir"></i></a>
+                            <a href="javascript:void(0)" class="qty-dec"><i class="porto-icon-down-dir"></i></a>                           
+                        </div>
+                        <?php if ($_product->getTypeId() != 'virtual') : ?>
+                            <span class="arrive-by">Arrives By 
+                                <?php echo $plus4days; ?><?php echo ' - ';
+                                echo $plus7days; ?>  
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+            <hr>
+            <?php if (isset($viewModel) && $viewModel->getExtendEnable()) : ?>
+                <div id="extend-offer"></div>
+
+                <script type="text/x-magento-init">
+                {
+                    "#extend-offer": {
+                        "extendWarranties":{"productSku":"<?= $_product->getTypeId() == 'configurable' ? '' : $_product->getSku() ?>"}
+                    }
+                }
+                </script>
+            <?php endif; ?>
+
+            <div class="actions">
+                <button type="submit"
+                        title="<?= /* @escapeNotVerified */
+                        $buttonTitle ?>"
+                        class="action primary tocart"
+                        id="product-addtocart-button">
+                    <span><?= /* @escapeNotVerified */
+                        $buttonTitle ?></span>
+                </button>
+                <?= $block->getChildHtml('', true) ?>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
+<script type="text/x-magento-init">
+    {
+        "#product_addtocart_form": {
+            "Magento_Catalog/js/validate-product": {}
+        }
+    }
+</script>

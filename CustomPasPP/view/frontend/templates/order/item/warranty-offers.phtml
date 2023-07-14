@@ -1,0 +1,52 @@
+<?php
+/**
+ * Extend Warranty - "Add Warranty" button for Lead Order
+ *
+ * @author      Extend Magento Team <magento@guidance.com>
+ * @category    Extend
+ * @package     Extend_Warranty
+ * @copyright   Copyright (c) 2022 Extend Inc. (https://www.extend.com/)
+ */
+/**
+ * @var \Extend\Warranty\Block\Order\Item\Renderer\LeadOfferRenderer $block
+ */
+
+/** @var \Magento\Sales\Api\Data\OrderItemInterface $_item */
+$_item = $block->getItem();
+
+/** @var \Extend\Warranty\ViewModel\Warranty $viewModel */
+$viewModel = $block->getViewModel();
+
+/* CUSTOMIZATION - 27-04-2023*/
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$dayLimit = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface')->getValue('pas_warranty/general/days');
+
+$orderDate = $block->getOrder()->getCreatedAt();
+$currentDate = date('Y-m-d H:m:s');
+$diff = strtotime($currentDate) - strtotime($orderDate);
+$totalDays = abs(round($diff / 86400));
+/* CUSTOMIZATION - 27-04-2023*/
+
+$leadToken = $viewModel->getLeadToken($_item);
+if($totalDays <= $dayLimit):
+?>
+
+<div class="order-warranty-offers override" id="warranty-offers-<?= $block->escapeHtmlAttr($_item->getId()) ?>"></div>
+<?php endif; ?>
+<script type="text/x-magento-init">
+    {
+        "#warranty-offers-<?= $block->escapeHtmlAttr($_item->getId()) ?>": {
+            "leadOrderWarranty":{
+                "itemId": "<?= $block->escapeJs($_item->getId()) ?>",
+                "productSku": "<?= $block->escapeJs($viewModel->getProductSkuByOrderItem($_item)) ?>",
+                "qty": "<?= $block->escapeJs($_item->getQtyOrdered()) ?>",
+                "leadToken": "<?= $block->escapeJs(implode(", ", $leadToken)) ?>",
+                "addLeadUrl" : "<?= $block->escapeUrl($block->getUrl('warranty/cart/addlead')) ?>",
+                "buttonEnabled": true,
+                "trackingEnabled": <?= $block->escapeJs($viewModel->isTrackingEnabled() ? 1 : 0) ?>,
+                "isWarrantyInLaterOrders": <?= (int)$viewModel->isWarrantyInLaterOrders($_item) ?>,
+                "isWarrantyInQuote": <?= (int)$viewModel->itemHasLeadWarrantyInQuote($_item) ?>
+            }
+        }
+    }
+</script>
